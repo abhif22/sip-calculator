@@ -32,3 +32,56 @@ th,td{padding:8px 10px;border-bottom:1px solid #eef2f7;text-align:left;font-size
 th{background:#f8fafc;font-size:0.85rem;color:#475569}
 small.note{color:#6b7280}
 .canvas-wrapper{background:white;padding:10px;border-radius:8px}
+/* ------------------------------ */
+/* restore original large UI look */
+/* ------------------------------ */
+
+/* Larger grid spacing */
+.grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px;
+}
+
+/* Bigger card padding */
+.card {
+  padding: 32px;
+}
+
+/* Bigger subtitle */
+.subtitle {
+  font-size: 1rem;
+  margin-bottom: 22px;
+}
+
+/* Larger labels */
+.field label {
+  font-size: 1rem;
+  font-weight: 600;
+}
+label .helper {
+  font-size: 0.9rem;
+}
+
+/* Inputs larger like before */
+input[type="number"],
+input[type="text"],
+input[type="range"] {
+  padding: 12px 14px !important;
+  font-size: 1rem !important;
+  border-radius: 10px !important;
+}
+
+/* Inline unit text larger */
+.inline-input .unit {
+  font-size: 1rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+/* Restore big button style */
+button {
+  font-size: 1.05rem !important;
+  padding: 14px 20px !important;
+  border-radius: 50px !important;
+  margin-top: 22px !important;
+}
