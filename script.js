@@ -1,32 +1,28 @@
-// script.js — improved binding: auto-recalc on any input change (debounced) + UI tweaks
+// script.js — light-theme layout + auto recalculation + crisp chart configuration
 
 const $ = id => document.getElementById(id);
 const formatINR = v => new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(v || 0);
 
 let chartInstance = null;
 let autoCalcDebounce = null;
-const DEBOUNCE_MS = 300;
+const DEBOUNCE_MS = 240;
 
-// ---------- Helpers ----------
 function debounceCalc() {
   if (autoCalcDebounce) clearTimeout(autoCalcDebounce);
-  autoCalcDebounce = setTimeout(() => {
-    onCalculate();
-    autoCalcDebounce = null;
-  }, DEBOUNCE_MS);
+  autoCalcDebounce = setTimeout(() => { onCalculate(); autoCalcDebounce = null; }, DEBOUNCE_MS);
 }
 
-function attachAutoCalcTo(selector, event='input') {
+function attachAutoCalcTo(selector) {
   document.querySelectorAll(selector).forEach(el => {
-    el.addEventListener(event, debounceCalc);
-    // also trigger on change for selects/checkboxes/radios
+    el.addEventListener('input', debounceCalc);
     el.addEventListener('change', debounceCalc);
   });
 }
 
-function numeric(v){ return Number(v) || 0; }
+// Basic helpers
+const numeric = v => Number(v) || 0;
 
-// ---------- Input collection ----------
+// INPUTS
 function getInputs(){
   const mode = document.querySelector('input[name="mode"]:checked').value;
   if (mode === 'sip') {
@@ -60,15 +56,11 @@ function getInputs(){
   }
 }
 
-// ---------- Simulations (unchanged logic but compact) ----------
-function simulateYearly(inputs) {
-  return inputs.mode === 'sip' ? simulateSIP(inputs) : simulateLumpsum(inputs);
-}
-
+// SIMULATIONS (SIP & Lumpsum)
 function simulateSIP(inputs){
   const months = inputs.tenure * 12;
   const monthlyRate = inputs.returnRate / 100 / 12;
-  const stepUpFactor = 1 + inputs.stepUp/100;
+  const stepUpFactor = 1 + inputs.stepUp / 100;
   let currentSip = inputs.sipAmount;
   let fv = 0, invested = 0;
   const yearEndNominal = [], yearEndReal = [], principalThisYear = [], interestThisYear = [];
@@ -106,7 +98,7 @@ function simulateLumpsum(inputs){
       const y = m/12;
       yearEndNominal.push(fv);
       yearEndReal.push(fv / Math.pow(1 + inputs.inflation/100, y));
-      principalThisYear.push(y===1 ? inputs.lumpsumAmount : 0);
+      principalThisYear.push(y === 1 ? inputs.lumpsumAmount : 0);
       interestThisYear.push(annualInterest);
       annualInterest = 0;
     }
@@ -114,7 +106,11 @@ function simulateLumpsum(inputs){
   return { yearEndNominal, yearEndReal, principalThisYear, interestThisYear, totalInvested: inputs.lumpsumAmount, finalFV: fv };
 }
 
-// ---------- Tax ----------
+function simulateYearly(inputs){
+  return inputs.mode === 'sip' ? simulateSIP(inputs) : simulateLumpsum(inputs);
+}
+
+// TAX
 function computeTax(finalFV, totalInvested, inputs){
   const gain = Math.max(0, finalFV - totalInvested);
   const exemption = inputs.applyDefaultLTCG ? 125000 : inputs.customExemption;
@@ -127,7 +123,7 @@ function computeTax(finalFV, totalInvested, inputs){
   return { gain, exemption, rate, cessRate, taxableGain, tax, postTaxFV };
 }
 
-// ---------- UI update + Chart ----------
+// UI update and chart rendering (crisp chart)
 function updateUI(result, taxResult, inputs){
   $('futureValue').textContent = formatINR(result.finalFV);
   $('inflationAdjusted').textContent = formatINR(result.finalFV / Math.pow(1 + inputs.inflation/100, inputs.tenure));
@@ -137,13 +133,11 @@ function updateUI(result, taxResult, inputs){
   $('effectiveCAGR').textContent = `Effective CAGR: ${effCAGR.toFixed(2)}%`;
   $('taxInfo').textContent = `LTCG: taxable ₹${Math.round(taxResult.taxableGain).toLocaleString('en-IN')}, tax ₹${Math.round(taxResult.tax).toLocaleString('en-IN')}, post-tax ${formatINR(taxResult.postTaxFV)}`;
 
-  if (inputs.mode === 'sip'){
-    $('summaryTenure').textContent = `SIP · ${inputs.tenure} yrs · ${inputs.returnRate}% p.a. · Infl ${inputs.inflation}%`;
-  } else {
-    $('summaryTenure').textContent = `Lumpsum · ${inputs.tenure} yrs · ${inputs.returnRate}% p.a. · Infl ${inputs.inflation}%`;
-  }
+  $('summaryTenure').textContent = inputs.mode === 'sip'
+    ? `SIP · ${inputs.tenure} yrs · ${inputs.returnRate}% p.a. · Infl ${inputs.inflation}%`
+    : `Lumpsum · ${inputs.tenure} yrs · ${inputs.returnRate}% p.a. · Infl ${inputs.inflation}%`;
 
-  // Table
+  // populate table
   const tbody = $('breakdownTable').querySelector('tbody');
   tbody.innerHTML = '';
   const nYears = result.yearEndNominal.length;
@@ -157,7 +151,7 @@ function updateUI(result, taxResult, inputs){
     tbody.appendChild(tr);
   }
 
-  // Chart
+  // Chart: crisp & clear
   const labels = Array.from({length: nYears}, (_,i) => (i+1).toString());
   const nominal = result.yearEndNominal.map(v => Math.round(v));
   const real = result.yearEndReal.map(v => Math.round(v));
@@ -167,6 +161,16 @@ function updateUI(result, taxResult, inputs){
 
 function renderChart(labels, nominal, real){
   const ctx = $('growthChart').getContext('2d');
+
+  // create subtle gradient fills for readability
+  const gradNom = ctx.createLinearGradient(0,0,0,400);
+  gradNom.addColorStop(0, 'rgba(37,99,235,0.16)');
+  gradNom.addColorStop(1, 'rgba(37,99,235,0.02)');
+
+  const gradReal = ctx.createLinearGradient(0,0,0,400);
+  gradReal.addColorStop(0, 'rgba(16,185,129,0.14)');
+  gradReal.addColorStop(1, 'rgba(16,185,129,0.02)');
+
   if (chartInstance){
     chartInstance.data.labels = labels;
     chartInstance.data.datasets[0].data = nominal;
@@ -174,32 +178,81 @@ function renderChart(labels, nominal, real){
     chartInstance.update();
     return;
   }
+
   chartInstance = new Chart(ctx, {
     type: 'line',
     data: {
       labels,
-      datasets:[
-        { label: 'Nominal (no inflation)', data: nominal, borderWidth: 2, tension: 0.28, fill:false, borderColor: 'rgba(37,99,235,1)', pointRadius: 3, pointHoverRadius:5 },
-        { label: 'Real (inflation adjusted)', data: real, borderWidth: 2, tension: 0.28, fill:false, borderColor: 'rgba(16,185,129,1)', pointRadius: 3, pointHoverRadius:5 }
+      datasets: [
+        {
+          label: 'Nominal (no inflation)',
+          data: nominal,
+          borderColor: 'rgba(37,99,235,1)',
+          backgroundColor: gradNom,
+          fill: true,
+          tension: 0.28,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          borderWidth: 3,
+        },
+        {
+          label: 'Real (inflation adjusted)',
+          data: real,
+          borderColor: 'rgba(16,185,129,1)',
+          backgroundColor: gradReal,
+          fill: true,
+          tension: 0.28,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          borderWidth: 3,
+        }
       ]
     },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      interaction:{mode:'index',intersect:false},
-      plugins:{legend:{labels:{usePointStyle:true}} },
-      scales:{
-        y: {
-          ticks: { callback: v => '₹' + v.toLocaleString('en-IN') }
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { usePointStyle: true, boxWidth: 10 } },
+        tooltip: {
+          enabled: true,
+          padding: 10,
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${formatINR(ctx.parsed.y)}`
+          }
         },
-        x: { title: { display: true, text: 'Years' } }
+        decimation: { enabled: false }
       },
-      elements:{point:{radius:3}}
+      scales: {
+        x: {
+          title: { display: true, text: 'Years', color: '#374151', font: {weight:700} },
+          ticks: { color: '#374151' },
+          grid: { display: false }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: '#374151',
+            callback: value => {
+              // Format large numbers with compact representation but keep INR label
+              if (value >= 1e7) return '₹' + (value/1e7).toFixed(1) + ' Cr';
+              if (value >= 1e5) return '₹' + (value/1e5).toFixed(1) + ' L';
+              return '₹' + Number(value).toLocaleString('en-IN');
+            }
+          },
+          grid: {
+            color: 'rgba(14,58,112,0.06)',
+            drawBorder: false,
+            tickLength: 0
+          }
+        }
+      },
+      elements: { line: { capBezierPoints: true } }
     }
   });
 }
 
-// ---------- Validation ----------
+// VALIDATION
 function validateInputs(inputs){
   if (inputs.mode === 'sip'){
     if (inputs.sipAmount < 0 || inputs.sipAmount > 500000) return 'Monthly SIP must be between ₹0 and ₹5,00,000.';
@@ -212,7 +265,7 @@ function validateInputs(inputs){
   return '';
 }
 
-// ---------- Main handler ----------
+// MAIN
 function onCalculate(){
   const inputs = getInputs();
   const err = validateInputs(inputs);
@@ -223,7 +276,7 @@ function onCalculate(){
   updateUI(sim, taxRes, inputs);
 }
 
-// ---------- Mode toggle UI nicety ----------
+// UI hooks: mode toggle and auto-bind
 function bindModeToggle(){
   const radios = document.querySelectorAll('input[name="mode"]');
   radios.forEach(r => {
@@ -231,29 +284,28 @@ function bindModeToggle(){
       const mode = document.querySelector('input[name="mode"]:checked').value;
       if (mode === 'sip'){ $('sipInputs').style.display=''; $('lumpsumInputs').style.display='none'; }
       else { $('sipInputs').style.display='none'; $('lumpsumInputs').style.display=''; }
-      // mark active label
-      document.querySelectorAll('.mode-toggle label').forEach(lbl => lbl.classList.remove('active'));
-      const parentLabel = r.closest('label') || document.querySelector(`label[for="${r.id}"]`);
-      if (parentLabel) parentLabel.classList.add('active');
+      // active label class
+      document.querySelectorAll('.mode-label').forEach(lbl => lbl.classList.remove('active'));
+      const chosen = Array.from(document.querySelectorAll('.mode-label')).find(lbl => lbl.querySelector(`input[name="mode"]:checked`));
+      // fallback: iterate and add based on inner input
+      document.querySelectorAll('.mode-label').forEach(lbl=>{
+        const inp = lbl.querySelector('input[name="mode"]');
+        if (inp && inp.checked) lbl.classList.add('active');
+      });
       debounceCalc();
     });
   });
 }
 
-// ---------- Auto-bind inputs for live update ----------
+// attach listeners to all inputs we care about
 function bindAutoCalc(){
-  // numeric inputs, selects, checkboxes
-  attachAutoCalcTo('input[type="number"], input[type="text"], select, input[type="checkbox"], input[type="radio"]', 'input');
-  // also ensure 'change' triggers immediately for selects and checkboxes
-  attachAutoCalcTo('select, input[type="checkbox"], input[type="radio"]', 'change');
+  attachAutoCalcTo('input[type="number"], input[type="text"], select, input[type="checkbox"], input[type="radio"]');
+  $('calcBtn').addEventListener('click', onCalculate);
 }
 
-// ---------- Init ----------
+// initialize
 document.addEventListener('DOMContentLoaded', () => {
   bindModeToggle();
   bindAutoCalc();
-  // manual calc button still available
-  $('calcBtn').addEventListener('click', onCalculate);
-  // initial run
   onCalculate();
 });
