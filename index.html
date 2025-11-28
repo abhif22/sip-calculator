@@ -1,122 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>SIP Calculator with Step-up & Inflation</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SIP Calculator — Step-up, Inflation, Year-breakdown & LTCG</title>
   <link rel="stylesheet" href="styles.css" />
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="app-wrapper">
     <div class="card">
       <h1>SIP Calculator</h1>
-      <div class="subtitle">
-        Monthly SIP with step-up, inflation adjustment and long-term compounding (up to 35 years).
-      </div>
+      <p class="subtitle">Monthly SIP with step-up, inflation adjustment, year-wise breakdown, chart and LTCG tax</p>
 
       <div class="grid grid-2">
-        <!-- Monthly Investment -->
         <div class="field">
-          <label>
-            Monthly SIP Amount
-            <span class="helper">Max ₹5,00,000</span>
-          </label>
+          <label>Monthly SIP Amount <span class="helper">Max ₹5,00,000</span></label>
           <div class="inline-input">
             <span class="unit">₹</span>
-            <input
-              id="sipAmount"
-              type="number"
-              min="0"
-              max="500000"
-              step="500"
-              value="10000"
-            />
+            <input id="sipAmount" type="number" min="0" max="500000" step="500" value="10000" />
           </div>
         </div>
 
-        <!-- Step-up % -->
         <div class="field">
-          <label>
-            Annual Step-up (%)
-            <span class="helper">Increase SIP every year</span>
-          </label>
+          <label>Annual Step-up (%) <span class="helper">Increase SIP each year</span></label>
           <div class="inline-input">
-            <input
-              id="stepUp"
-              type="number"
-              min="0"
-              max="50"
-              step="1"
-              value="10"
-            />
-            <span class="unit">% per year</span>
-          </div>
-        </div>
-
-        <!-- Tenure -->
-        <div class="field">
-          <label>
-            Tenure (Years)
-            <span class="helper">Max 35 years</span>
-          </label>
-          <div class="inline-input">
-            <input
-              id="tenure"
-              type="number"
-              min="1"
-              max="35"
-              step="1"
-              value="20"
-            />
-            <span class="unit">years</span>
-          </div>
-        </div>
-
-        <!-- Return Rate -->
-        <div class="field">
-          <label>
-            Expected Return (% p.a.)
-            <span class="helper">0% – 20% p.a.</span>
-          </label>
-          <div class="inline-input">
-            <input
-              id="returnRate"
-              type="number"
-              min="0"
-              max="20"
-              step="0.1"
-              value="12"
-            />
+            <input id="stepUp" type="number" min="0" max="50" step="0.1" value="10" />
             <span class="unit">% p.a.</span>
           </div>
         </div>
 
-        <!-- Inflation -->
         <div class="field">
-          <label>
-            Inflation Adjustment
-            <span class="helper">0% – 10% p.a.</span>
-          </label>
+          <label>Tenure (Years) <span class="helper">Max 35 years</span></label>
           <div class="inline-input">
-            <input
-              id="inflation"
-              type="number"
-              min="0"
-              max="10"
-              step="0.1"
-              value="6"
-            />
+            <input id="tenure" type="number" min="1" max="35" step="1" value="20" />
+            <span class="unit">yrs</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Expected Return (% p.a.) <span class="helper">0 – 20%</span></label>
+          <div class="inline-input">
+            <input id="returnRate" type="number" min="0" max="20" step="0.1" value="12" />
             <span class="unit">% p.a.</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Inflation (% p.a.) <span class="helper">0 – 10%</span></label>
+          <div class="inline-input">
+            <input id="inflation" type="number" min="0" max="10" step="0.1" value="6" />
+            <span class="unit">% p.a.</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Show inflation-adjusted numbers</label>
+          <div>
+            <input id="showInflationAdjusted" type="checkbox" checked />
+            <label for="showInflationAdjusted" class="small">Enable real (inflation adjusted) column in table</label>
           </div>
         </div>
       </div>
 
-      <button onclick="calculateSIP()">Calculate</button>
+      <div class="hr"></div>
+
+      <h3>Tax options (Long-Term Capital Gains)</h3>
+      <div class="grid grid-2">
+        <div class="field">
+          <label>
+            Apply default equity LTCG rules
+            <span class="helper">12.5% above ₹1,25,000 + 4% cess (current default)</span>
+          </label>
+          <div>
+            <input id="applyDefaultLTCG" type="checkbox" checked />
+            <label class="small">Apply default equity LTCG</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Or use custom LTCG</label>
+          <div class="inline-input">
+            <input id="customExemption" type="number" min="0" step="1000" value="125000" />
+            <span class="unit">Exemption ₹</span>
+          </div>
+          <div style="margin-top:6px" class="inline-input">
+            <input id="customRate" type="number" min="0" max="100" step="0.1" value="12.5" />
+            <span class="unit">% tax</span>
+            <label class="small" style="margin-left:8px"><input id="applyCess" type="checkbox" checked /> Apply 4% cess</label>
+          </div>
+        </div>
+      </div>
+
+      <button id="calcBtn">Calculate & Update</button>
       <div id="error" class="error"></div>
 
-      <div class="results" id="results" style="display:none;">
+      <div id="summary" class="results" style="display:none;">
         <div class="results-header">
-          <h2>Projection Summary</h2>
+          <h2>Summary</h2>
           <span id="summaryTenure"></span>
         </div>
 
@@ -126,11 +108,11 @@
             <div class="stat-value" id="futureValue"></div>
           </div>
           <div class="stat">
-            <div class="stat-label">Inflation Adjusted Value</div>
+            <div class="stat-label">Inflation Adjusted (Real)</div>
             <div class="stat-value" id="inflationAdjusted"></div>
           </div>
           <div class="stat">
-            <div class="stat-label">Total Amount Invested</div>
+            <div class="stat-label">Total Invested</div>
             <div class="stat-value" id="totalInvested"></div>
           </div>
         </div>
@@ -138,8 +120,35 @@
         <div class="pill-row">
           <div class="pill" id="totalGain"></div>
           <div class="pill" id="effectiveCAGR"></div>
-          <div class="pill" id="stepUpInfo"></div>
+          <div class="pill" id="taxInfo"></div>
         </div>
+
+        <div class="hr"></div>
+
+        <h3>Year-wise breakdown</h3>
+        <div class="table-controls">
+          <label><input id="showRealInTable" type="checkbox" checked /> Show inflation-adjusted column</label>
+        </div>
+        <div class="table-wrapper">
+          <table id="breakdownTable">
+            <thead>
+              <tr>
+                <th>Year</th>
+                <th>Year-end Value (Nominal)</th>
+                <th>Principal contributed this year</th>
+                <th>Interest earned this year</th>
+                <th>Year-end Value (Real)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="hr"></div>
+
+        <h3>Growth chart: Nominal vs Real</h3>
+        <canvas id="growthChart" height="200"></canvas>
+
       </div>
     </div>
   </div>
