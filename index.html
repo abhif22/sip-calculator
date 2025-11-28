@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>SIP Calculator — Step-up, Inflation, Year-breakdown & LTCG</title>
+  <title>SIP / Lumpsum Calculator — Step-up, Inflation, Year-breakdown & LTCG</title>
   <link rel="stylesheet" href="styles.css" />
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,55 +11,120 @@
 <body>
   <div class="app-wrapper">
     <div class="card">
-      <h1>SIP Calculator</h1>
-      <p class="subtitle">Monthly SIP with step-up, inflation adjustment, year-wise breakdown, chart and LTCG tax</p>
+      <h1>Investment Calculator</h1>
+      <p class="subtitle">Toggle between SIP and Lumpsum — both support inflation, year breakdown, chart and LTCG</p>
 
-      <div class="grid grid-2">
-        <div class="field">
-          <label>Monthly SIP Amount <span class="helper">Max ₹5,00,000</span></label>
-          <div class="inline-input">
-            <span class="unit">₹</span>
-            <input id="sipAmount" type="number" min="0" max="500000" step="500" value="10000" />
+      <div class="mode-toggle">
+        <label><input type="radio" name="mode" value="sip" id="modeSIP" checked /> SIP</label>
+        <label><input type="radio" name="mode" value="lumpsum" id="modeLumpsum" /> Lumpsum</label>
+      </div>
+
+      <!-- SIP Inputs -->
+      <div id="sipInputs" class="inputs-block">
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Monthly SIP Amount <span class="helper">Max ₹5,00,000</span></label>
+            <div class="inline-input">
+              <span class="unit">₹</span>
+              <input id="sipAmount" type="number" min="0" max="500000" step="500" value="10000" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Annual Step-up (%) <span class="helper">Increase SIP each year</span></label>
+            <div class="inline-input">
+              <input id="stepUp" type="number" min="0" max="50" step="0.1" value="10" />
+              <span class="unit">% p.a.</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Tenure (Years) <span class="helper">Max 35 years</span></label>
+            <div class="inline-input">
+              <input id="tenure" type="number" min="1" max="35" step="1" value="20" />
+              <span class="unit">yrs</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Expected Return (% p.a.) <span class="helper">0 – 20%</span></label>
+            <div class="inline-input">
+              <input id="returnRate" type="number" min="0" max="20" step="0.1" value="12" />
+              <span class="unit">% p.a.</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Inflation (% p.a.) <span class="helper">0 – 10%</span></label>
+            <div class="inline-input">
+              <input id="inflation" type="number" min="0" max="10" step="0.1" value="6" />
+              <span class="unit">% p.a.</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Show inflation-adjusted numbers</label>
+            <div>
+              <input id="showInflationAdjusted" type="checkbox" checked />
+              <label for="showInflationAdjusted" class="small">Enable real (inflation adjusted) column in table</label>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div class="field">
-          <label>Annual Step-up (%) <span class="helper">Increase SIP each year</span></label>
-          <div class="inline-input">
-            <input id="stepUp" type="number" min="0" max="50" step="0.1" value="10" />
-            <span class="unit">% p.a.</span>
+      <!-- Lumpsum Inputs -->
+      <div id="lumpsumInputs" class="inputs-block" style="display:none;">
+        <div class="grid grid-2">
+          <div class="field">
+            <label>Lumpsum Amount <span class="helper">Max ₹10,00,00,000</span></label>
+            <div class="inline-input">
+              <span class="unit">₹</span>
+              <input id="lumpsumAmount" type="number" min="0" max="1000000000" step="1000" value="100000" />
+            </div>
           </div>
-        </div>
 
-        <div class="field">
-          <label>Tenure (Years) <span class="helper">Max 35 years</span></label>
-          <div class="inline-input">
-            <input id="tenure" type="number" min="1" max="35" step="1" value="20" />
-            <span class="unit">yrs</span>
+          <div class="field">
+            <label>Tenure (Years) <span class="helper">Max 35 years</span></label>
+            <div class="inline-input">
+              <input id="lumpTenure" type="number" min="1" max="35" step="1" value="10" />
+              <span class="unit">yrs</span>
+            </div>
           </div>
-        </div>
 
-        <div class="field">
-          <label>Expected Return (% p.a.) <span class="helper">0 – 20%</span></label>
-          <div class="inline-input">
-            <input id="returnRate" type="number" min="0" max="20" step="0.1" value="12" />
-            <span class="unit">% p.a.</span>
+          <div class="field">
+            <label>Expected Return (% p.a.) <span class="helper">0 – 20%</span></label>
+            <div class="inline-input">
+              <input id="lumpReturnRate" type="number" min="0" max="20" step="0.1" value="10" />
+              <span class="unit">% p.a.</span>
+            </div>
           </div>
-        </div>
 
-        <div class="field">
-          <label>Inflation (% p.a.) <span class="helper">0 – 10%</span></label>
-          <div class="inline-input">
-            <input id="inflation" type="number" min="0" max="10" step="0.1" value="6" />
-            <span class="unit">% p.a.</span>
+          <div class="field">
+            <label>Inflation (% p.a.) <span class="helper">0 – 10%</span></label>
+            <div class="inline-input">
+              <input id="lumpInflation" type="number" min="0" max="10" step="0.1" value="6" />
+              <span class="unit">% p.a.</span>
+            </div>
           </div>
-        </div>
 
-        <div class="field">
-          <label>Show inflation-adjusted numbers</label>
-          <div>
-            <input id="showInflationAdjusted" type="checkbox" checked />
-            <label for="showInflationAdjusted" class="small">Enable real (inflation adjusted) column in table</label>
+          <div class="field">
+            <label>Show inflation-adjusted numbers</label>
+            <div>
+              <input id="showLumpInflationAdjusted" type="checkbox" checked />
+              <label class="small">Enable real (inflation adjusted) column in table</label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Compounding frequency</label>
+            <div class="inline-input">
+              <select id="lumpCompFreq">
+                <option value="12">Monthly</option>
+                <option value="4">Quarterly</option>
+                <option value="1">Annually</option>
+              </select>
+              <span class="unit small">affects compounding</span>
+            </div>
           </div>
         </div>
       </div>
@@ -71,7 +136,7 @@
         <div class="field">
           <label>
             Apply default equity LTCG rules
-            <span class="helper">12.5% above ₹1,25,000 + 4% cess (current default)</span>
+            <span class="helper">12.5% above ₹1,25,000 + 4% cess (default)</span>
           </label>
           <div>
             <input id="applyDefaultLTCG" type="checkbox" checked />
