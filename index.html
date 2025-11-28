@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SIP Calculator with Step-up & Inflation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-wrapper">
+    <div class="card">
+      <h1>SIP Calculator</h1>
+      <div class="subtitle">
+        Monthly SIP with step-up, inflation adjustment and long-term compounding (up to 35 years).
+      </div>
+
+      <div class="grid grid-2">
+        <!-- Monthly Investment -->
+        <div class="field">
+          <label>
+            Monthly SIP Amount
+            <span class="helper">Max ₹5,00,000</span>
+          </label>
+          <div class="inline-input">
+            <span class="unit">₹</span>
+            <input
+              id="sipAmount"
+              type="number"
+              min="0"
+              max="500000"
+              step="500"
+              value="10000"
+            />
+          </div>
+        </div>
+
+        <!-- Step-up % -->
+        <div class="field">
+          <label>
+            Annual Step-up (%)
+            <span class="helper">Increase SIP every year</span>
+          </label>
+          <div class="inline-input">
+            <input
+              id="stepUp"
+              type="number"
+              min="0"
+              max="50"
+              step="1"
+              value="10"
+            />
+            <span class="unit">% per year</span>
+          </div>
+        </div>
+
+        <!-- Tenure -->
+        <div class="field">
+          <label>
+            Tenure (Years)
+            <span class="helper">Max 35 years</span>
+          </label>
+          <div class="inline-input">
+            <input
+              id="tenure"
+              type="number"
+              min="1"
+              max="35"
+              step="1"
+              value="20"
+            />
+            <span class="unit">years</span>
+          </div>
+        </div>
+
+        <!-- Return Rate -->
+        <div class="field">
+          <label>
+            Expected Return (% p.a.)
+            <span class="helper">0% – 20% p.a.</span>
+          </label>
+          <div class="inline-input">
+            <input
+              id="returnRate"
+              type="number"
+              min="0"
+              max="20"
+              step="0.1"
+              value="12"
+            />
+            <span class="unit">% p.a.</span>
+          </div>
+        </div>
+
+        <!-- Inflation -->
+        <div class="field">
+          <label>
+            Inflation Adjustment
+            <span class="helper">0% – 10% p.a.</span>
+          </label>
+          <div class="inline-input">
+            <input
+              id="inflation"
+              type="number"
+              min="0"
+              max="10"
+              step="0.1"
+              value="6"
+            />
+            <span class="unit">% p.a.</span>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="calculateSIP()">Calculate</button>
+      <div id="error" class="error"></div>
+
+      <div class="results" id="results" style="display:none;">
+        <div class="results-header">
+          <h2>Projection Summary</h2>
+          <span id="summaryTenure"></span>
+        </div>
+
+        <div class="results-grid">
+          <div class="stat stat-highlight">
+            <div class="stat-label">Future Value (Nominal)</div>
+            <div class="stat-value" id="futureValue"></div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Inflation Adjusted Value</div>
+            <div class="stat-value" id="inflationAdjusted"></div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Total Amount Invested</div>
+            <div class="stat-value" id="totalInvested"></div>
+          </div>
+        </div>
+
+        <div class="pill-row">
+          <div class="pill" id="totalGain"></div>
+          <div class="pill" id="effectiveCAGR"></div>
+          <div class="pill" id="stepUpInfo"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
